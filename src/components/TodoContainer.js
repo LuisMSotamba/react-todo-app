@@ -2,6 +2,7 @@ import React from 'react';
 import TodoList from './TodoList'
 import Header from './Header'
 import InputTodo from './InputTodo';
+import axios from 'axios';
 import {v4 as uuidv4} from 'uuid';
 
 
@@ -11,22 +12,23 @@ class TodoContainer extends React.Component{
         super(props);
         this.state = {
             todos: [
-                {
-                    id: uuidv4(),
-                    title: "Setup development enviroment",
-                    completed : true
-                },
-                {
-                    id: uuidv4(),
-                    title: 'Develop website and add component',
-                    completed: false,
-                },
-                {
-                    id: uuidv4(), 
-                    title: 'Deploy to live server',
-                    completed: false,
-                }
-            ]
+                // {
+                //     id: uuidv4(),
+                //     title: "Setup development enviroment",
+                //     completed : true
+                // },
+                // {
+                //     id: uuidv4(),
+                //     title: 'Develop website and add component',
+                //     completed: false,
+                // },
+                // {
+                //     id: uuidv4(), 
+                //     title: 'Deploy to live server',
+                //     completed: false,
+                // }
+            ],
+            show: false
         }
     }
 
@@ -35,35 +37,46 @@ class TodoContainer extends React.Component{
         console.log('clicked ', id);
         this.setState({
             todos : this.state.todos.map(todo=>{
-                console.log(todo.id)
                 if(todo.id === id){
-                    console.log('entre')
                     todo.completed = !todo.completed;
                 }
                 return todo;
-            })
+            }),
+            show: !this.state.show
         })
     }
 
     delTodo = id=>{
         console.log('clicked ',id);
-        this.setState({
+        axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
+        .then(response=>this.setState({
             todos: this.state.todos.filter(todo=>{
                 return todo.id !== id
             })
-        })
+        }))
+        
     }
 
     addTodoItem = title=>{
-        console.log(title)
-        const newTodo = {
-            id: uuidv4(),
+        // console.log(title)
+        // const newTodo = {
+        //     id: uuidv4(),
+        //     title,
+        //     completed: false
+        // };
+        axios.post('https://jsonplaceholder.typicode.com/todos',{
             title,
             completed: false
-        };
-        this.setState({
-            todos:[...this.state.todos, newTodo]
-        })
+        }).then(response=>this.setState({
+            todos:[...this.state.todos, response.data]
+        }))
+        
+    }
+
+    componentDidMount(){
+        axios.get("https://jsonplaceholder.typicode.com/todos?_limit=50")
+        .then(response=>this.setState({todos: response.data}))
+        .catch(error=>console.log(error));
     }
 
     render(){
@@ -72,7 +85,7 @@ class TodoContainer extends React.Component{
             //Alternative to React.Fragment
             //<> ... </>
            <div className="container" >
-               <Header/>
+               <Header headerSpan={this.state.show} />
                <InputTodo addTodoProps = {this.addTodoItem} />
                <TodoList todos={this.state.todos} handleChangeProps = {this.handleChange} deleteTodoProps={this.delTodo}/>
            </div>
